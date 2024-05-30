@@ -284,4 +284,5 @@ class TicTacToeAi():
             self.alphaBetaPruning(self.depth, self.boardValue, self.nextBound, -math.inf, math.inf, True)
             self.turn += 1
             return (self.currentI, self.currentJ)
+        # tlaslkhdasjbkdfhasdf
         
