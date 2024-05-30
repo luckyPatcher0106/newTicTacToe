@@ -30,6 +30,15 @@ class TicTacToeAi():
             for j in range(N):
                 self.boardMap[i][j] = symbols[board[i][j]]
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
     def isValid(self, i, j, state=True):
         '''
         Kiểm tra xem ô có hợp lệ để đặt nước đi không.
@@ -251,9 +260,11 @@ class TicTacToeAi():
     # nếu bot đi đầu tiên nước đi sẽ tự động là (7,7) giữa bàn cờ tức là (X)
     def firstMove(self):
         k = math.floor(N/2)
-        self.currentI, self.currentJ = k, k
+        if self.isValid(k, k, 1):
+            self.currentI, self.currentJ = k, k
+        else:
+            self.currentI, self.currentJ = k, k - 1
         self.setState(self.currentI, self.currentJ, 1)
-        return (self.currentI, self.currentJ)
 
     # ktra xem trò chơi đã kết thúc chưa và trả về người chiến thắng nếu có 
     # ngược lại, nếu không còn ô trống thì kết quả là hòa
@@ -274,15 +285,4 @@ class TicTacToeAi():
             return 'Người chơi!'
         else:
             return 'Không ai'
-        
-    def get_move(self, board: list[list[str]]) -> tuple[int, int] | None:
-        if self.turn == 0:
-            self.turn += 1
-            return self.firstMove()
-        else:
-            self.convertBoard(board)
-            self.alphaBetaPruning(self.depth, self.boardValue, self.nextBound, -math.inf, math.inf, True)
-            self.turn += 1
-            return (self.currentI, self.currentJ)
-        # tlaslkhdasjbkdfhasdf
         

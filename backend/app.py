@@ -6,7 +6,8 @@ import requests
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS, cross_origin
 
-from TicTacToeAi import TicTacToeAi
+from TicTacToeAi import *
+import gomoku
 
 app = Flask(__name__)
 cors = CORS(app)
@@ -31,8 +32,9 @@ class GameClient:
         self.board = None
         self.init = None
         self.size = None
-        self.ai = TicTacToeAi(depth=3)
+        self.ai = TicTacToeAi()
         self.room_id = room_id
+        self.count = 0
 
     def listen(self):
         # Lắng nghe yêu cầu từ server trọng tài
@@ -70,20 +72,39 @@ class GameClient:
                 # Nếu là lượt đi của đội của mình thì gửi nước đi             
                 log_game_info()
                 if data.get("turn") in self.team_id:
-                    self.size = int(data.get("size"))
-                    self.board = copy.deepcopy(data.get("board"))
-                    # Lấy nước đi từ AI, nước đi là một tuple (i, j)
-                    move = self.ai.get_move(self.board)
-                    print("Move: ", move)
-                    # Kiểm tra nước đi hợp lệ
-                    valid_move = self.check_valid_move(move)
-                    # Nếu hợp lệ thì gửi nước đi
-                    if valid_move:
-                        self.board[int(move[0])][int(move[1])] = self.team_roles
-                        game_info["board"] = self.board
-                        self.send_move()
+                    if self.count == 0 | 1:
+                        move = self.ai.firstMove()
                     else:
-                        print("Invalid move")
+                        self.size = int(data.get("size"))
+                        self.board = copy.deepcopy(data.get("board"))
+                        self.ai.convertBoard(self.board)
+                        # Lấy nước đi từ AI, nước đi là một tuple (i, j)
+                        move = gomoku.ai_move(self.ai)
+                        
+                        print("Move: ", move)
+                        # Kiểm tra nước đi hợp lệ
+                        valid_move = self.check_valid_move(move)
+                        # Nếu hợp lệ thì gửi nước đi
+                        if valid_move:
+                            self.board[int(move[0])][int(move[1])] = self.team_roles
+                            game_info["board"] = self.board
+                            self.send_move()
+                        else:
+                            print("Invalid move")
+                    move = (self.ai.currentI, self.ai.currentJ)
+                    self.ai.setState(move[0], move[1], self.ai.turn)
+                    self.ai.rollingHash ^= self.ai.zobristTable[move[0]][move[1]][0]
+                    self.ai.emptyCells -= 1
+                else:
+                    move = (self.ai.currentI, self.ai.currentJ)
+                    if self.ai.isValid(self.ai.currentI, self.ai.currentJ):
+                        self.ai.boardValue = self.ai.evaluate(self.ai.currentI, self.ai.currentJ, self.ai.boardValue, -1, self.ai.nextBound)
+                        self.ai.updateBound(self.ai.currentI, self.ai.currentJ, self.ai.nextBound)
+                        self.ai.currentI, self.ai.currentJ = self.ai.currentI, self.ai.currentJ
+                        # thực hiện nước đi và cập nhật bảng zobrist
+                        self.ai.setState(self.ai.currentI, self.ai.currentJ, self.ai.turn)
+                        self.ai.rollingHash ^= self.ai.zobristTable[self.ai.currentI][self.ai.currentJ][1]
+                        self.ai.emptyCells -= 1
 
             # Kết thúc trò chơi
             elif data.get("status") is not None:
@@ -172,4 +193,3 @@ if __name__ == "__main__":
     # Khởi tạo game client
     gameClient = GameClient(host, room_id, your_team_id, opponent_team_id, team_roles)
     gameClient.listen()
-
