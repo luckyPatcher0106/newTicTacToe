@@ -114,6 +114,7 @@ class GameClient:
                         self.ai.setState(move[0], move[1], self.ai.turn)
                         self.ai.rollingHash ^= self.ai.zobristTable[move[0]][move[1]][0]
                         self.ai.emptyCells -= 1
+                        # ashfkjlasdhfjkla
                         self.ai.boardConvert(self.prvBoard)
                         # Kiểm tra nước đi hợp lệ
                         valid_move = self.check_valid_move(move)
